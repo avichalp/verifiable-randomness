@@ -1,0 +1,15 @@
+node_modules
+.env
+coverage
+coverage.json
+typechain
+
+.DS_Store
+
+#Shadow CLJS
+.shadow-cljs
+out
+
+#Hardhat files
+cache
+artifacts

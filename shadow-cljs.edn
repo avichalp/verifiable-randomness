@@ -1,0 +1,13 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src/dev"]
+
+ :dependencies
+ [[org.clojure/core.async "1.3.618"]]
+
+ :builds
+ {:app {:target :node-script
+        :output-dir "out"
+        :asset-path "/js"
+        :output-to "out/script.js"
+        :main user/main}}}
