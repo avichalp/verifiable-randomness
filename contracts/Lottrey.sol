@@ -37,7 +37,7 @@ contract Lottery is VRFConsumerBase, Ownable {
         uint256 _fee,
         bytes32 _keyHash
         ) VRFConsumerBase(_vrfCoordinator, _link) {
-        usdEntryFee = 50 * 10 * (10**18);
+        usdEntryFee = 50  * 10 * (10**18);
         _ethUsdPriceFeed = AggregatorV3Interface(_priceFeedAddress);
         lottery_state = LOTTERY_STATE.CLOSED;
         vrfCoordinator = _vrfCoordinator;
@@ -46,22 +46,22 @@ contract Lottery is VRFConsumerBase, Ownable {
         keyHash = _keyHash;
     }
 
+    function startLottery() public onlyOwner {
+        require(lottery_state == LOTTERY_STATE.CLOSED, "can't start the lottery yet!");
+        lottery_state = LOTTERY_STATE.OPEN; 
+    }
+
     function enter() public payable {
         require(msg.value >= getEntranceFee(), "Not enough ETH");
         require(lottery_state == LOTTERY_STATE.OPEN, "Can't enter the new lottery yet!");
         players.push(msg.sender);
     }
 
-
-    function startLottery() public onlyOwner {
-        require(lottery_state == LOTTERY_STATE.CLOSED, "can't start the lottery yet!");
-        lottery_state = LOTTERY_STATE.OPEN; 
-    }
-
-    function endLottery() public {
-        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
-        // either wrong keyHash or wrong fee
+    function endLottery() public onlyOwner {
+        require(lottery_state == LOTTERY_STATE.OPEN, "Lottery is not open yet");
         require(LINK.balanceOf(address(this)) >= fee,  "Not enough link tokens");
+
+        lottery_state = LOTTERY_STATE.CALCULATING_WINNER;
         bytes32 requestId = requestRandomness(keyHash, fee);
         emit RequestedRandomness(requestId);
     }
@@ -69,7 +69,6 @@ contract Lottery is VRFConsumerBase, Ownable {
     function getEntranceFee() public view returns (uint256) {
         (, int price, , , ) = _ethUsdPriceFeed.latestRoundData();
         uint256 adjustedPrice = uint256(price) * 10**10; // 18 decimals
-        console.log(adjustedPrice);
         uint256 costToEnter = (usdEntryFee * 10**18) / adjustedPrice;
         return costToEnter;
     }
@@ -77,12 +76,12 @@ contract Lottery is VRFConsumerBase, Ownable {
     function fulfillRandomness(bytes32 requestId, uint256 _randomness) internal override {
             require(lottery_state == LOTTERY_STATE.CALCULATING_WINNER, "You aitn't there yet");
             require(_randomness > 0,   "random not found");
+
             uint256 indexOfWinner = _randomness % players.length;
             recentWinner = payable(players[indexOfWinner]);
             recentWinner.transfer(address(this).balance);
 
             players = new address payable[](0);
-            console.log("FULFILLING !!!");
             lottery_state = LOTTERY_STATE.CLOSED;
             randomness = _randomness;
 
