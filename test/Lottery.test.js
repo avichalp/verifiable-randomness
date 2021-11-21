@@ -64,10 +64,6 @@ describe('Lottery', () => {
             keyHash,
         );
 
-        // fund lottery contract with LINK (ERC20)
-        await Link.transfer(Lottery.address, "100000000000000000");
-        
-
     });
 
     describe("when user opens a lottery", () => {
@@ -84,16 +80,6 @@ describe('Lottery', () => {
                 Lottery.startLottery(),
                 "can't start the lottery yet"
               );
-            // tx = await Lottery.endLottery();
-            // const { events } = await tx.wait();      
-            // const requestedRandomnessEvent = events.filter((e) => e.event === "RequestedRandomness")[0];
-            // const requestId = requestedRandomnessEvent.args[0];
-            // console.log("request id", requestId);
-            // tx = await VRFCoordinator.callBackWithRandomness(requestId, 777, Lottery.address);
-            // console.log(await tx.wait());
-            // console.log("state", await Lottery.lottery_state());
-
-
         });
 
         it('reverts when user is not the owner and lottery is already closed', async () => {
@@ -116,7 +102,7 @@ describe('Lottery', () => {
             tx = await Lottery.startLottery();
             const entranceFee = await Lottery.getEntranceFee();
             await assertRevert(
-                Lottery.enter({value: entranceFee.sub(1)}),
+                Lottery.connect(user).enter({value: entranceFee.sub(1)}),
                 "Not enough ETH"
             );            
         });
@@ -124,21 +110,83 @@ describe('Lottery', () => {
         it('reverts when user enter with in a CLOSED lottery', async () => {
             const entranceFee = await Lottery.getEntranceFee();
             await assertRevert(
-                Lottery.enter({value: entranceFee.add(1)}),
+                Lottery.connect(user).enter({value: entranceFee.add(1)}),
                 "Can't enter the new lottery yet!"
             );  
         });
+
+        it('user enters lottery when amount equals to required fee', async () => {
+            tx = await Lottery.startLottery();
+            const entranceFee = await Lottery.getEntranceFee();
+            await Lottery.connect(user).enter({value: entranceFee});
+            asserts.equal(await Lottery.players(0), user.address);                
+        });
+
+        it('user enters lottery when amount greater than required fee', async () => {
+            tx = await Lottery.startLottery();
+            const entranceFee = await Lottery.getEntranceFee();
+            await Lottery.connect(user).enter({value: entranceFee.add(1)});
+            asserts.equal(await Lottery.players(0), user.address);                
+        });
+
+        it('user enters a CLOSED lottey with less than required fee', async () => {
+            const entranceFee = await Lottery.getEntranceFee();
+            await assertRevert(
+                Lottery.connect(user).enter({value: entranceFee.sub(1)}),
+                "Not enough ETH"
+            );
+            
+        });
+
+        
     });
 
     describe("when owner ends a lottery that has not been started", () => {
 
-        it('reverts', async () => {
-            console.log("hello", Link.address);
+        it('reverts if lottery is not OPEN yet', async () => {            
             await assertRevert(
                 Lottery.endLottery(),
                 'Lottery is not open yet'
               ); 
         })
+
+        it('reverts if lottery contract doesn\'t have enough LINK', async () => {
+            tx = await Lottery.startLottery();
+            await assertRevert(
+                Lottery.endLottery(),
+                "Not enough link tokens"
+            );
+        });
+
+        it('reverts if lottery is not OPEN yet and there are not enought LINK tokens', async () => {
+            await assertRevert(
+                Lottery.endLottery(),
+                "Lottery is not open yet"
+            );
+        })
+
+        it('when lottery is open and lottery contract has enough LINK', async () => {
+            await Lottery.startLottery();
+            await Link.transfer(Lottery.address, "100000000000000000");
+            const entranceFee = await Lottery.getEntranceFee();
+            await Lottery.enter({value: entranceFee.add(1)});
+            tx = await Lottery.endLottery();
+
+            // Goes into calculating state
+            asserts.equal(await Lottery.lottery_state(), 2);
+
+            const { events } = await tx.wait();      
+            const requestedRandomnessEvent = events.filter((e) => e.event === "RequestedRandomness")[0];
+            const requestId = requestedRandomnessEvent.args[0];
+            
+            tx = await VRFCoordinator.callBackWithRandomness(requestId, 777, Lottery.address);
+            await tx.wait()
+
+            // Lottery closes
+            asserts.equal(await Lottery.lottery_state(), 1);
+        });
+
+        // TODO: test fullfillRandomness is executed correctly (4 tests)
 
     });
 });
