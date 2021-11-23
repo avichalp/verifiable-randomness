@@ -1,6 +1,5 @@
 const {ethers} = require("hardhat");
 const asserts = require('assert');
-const { use } = require("chai");
 
 
 async function assertRevert(tx, expectedMessage) {
@@ -30,7 +29,8 @@ describe('Lottery', () => {
     let Lottery;
     let Link;
     let VRFCoordinator;
-    let V3Aggregator
+    let V3Aggregator;
+    let LotteryWrapper;
 
     let users;
     let owner, user;
@@ -45,7 +45,7 @@ describe('Lottery', () => {
         [owner, user] = users;
     });
 
-    beforeEach('deploy contract', async () => {
+    beforeEach('deploy lottery contract', async () => {
         let factory = await ethers.getContractFactory('LinkToken');
         Link = await factory.deploy();
 
@@ -136,12 +136,10 @@ describe('Lottery', () => {
                 "Not enough ETH"
             );
             
-        });
-
-        
+        });    
     });
 
-    describe("when owner ends a lottery that has not been started", () => {
+    describe("when owner ends the lottery", () => {
 
         it('reverts if lottery is not OPEN yet', async () => {            
             await assertRevert(
@@ -178,7 +176,7 @@ describe('Lottery', () => {
             const { events } = await tx.wait();      
             const requestedRandomnessEvent = events.filter((e) => e.event === "RequestedRandomness")[0];
             const requestId = requestedRandomnessEvent.args[0];
-            
+
             tx = await VRFCoordinator.callBackWithRandomness(requestId, 777, Lottery.address);
             await tx.wait()
 
@@ -186,7 +184,57 @@ describe('Lottery', () => {
             asserts.equal(await Lottery.lottery_state(), 1);
         });
 
-        // TODO: test fullfillRandomness is executed correctly (4 tests)
+        describe('when fullfillRandomness callback is called', () => { 
+            
+            beforeEach('deploy LottreyTest contract', async () => {
+                factory = await ethers.getContractFactory('LotteryTest');
+                LotteryWrapper = await factory.deploy(
+                    V3Aggregator.address,
+                    VRFCoordinator.address,
+                    Link.address,
+                    fee,
+                    keyHash,
+                );
+                await LotteryWrapper.deployed();                
+            });
 
+                    // TODO: test fullfillRandomness is executed correctly (4 tests)
+        it('fullfuillRandomness callback reverts when lottery has not started yet', async () => {
+            await assertRevert(
+                LotteryWrapper.testFulfillRandomnessNotStarted(
+                    "0x3c79835819c98ec534a806af3c653103cda379b6ebdaa07632da2b195a327abe",
+                    777
+                ),
+                "You ain't there yet");                 
+        });
+
+        it('fullfuillRandomness callback reverts when returned randomness is 0', async () => {
+            await assertRevert(
+                LotteryWrapper.testFulfillRandomnessZeroRandomness(
+                    "0x3c79835819c98ec534a806af3c653103cda379b6ebdaa07632da2b195a327abe",
+                    0
+                ),
+                "random not found");
+        });
+
+        it('fullfuillRandomness callback reverts when there are no entrants', async () => {
+            await assertRevert(
+                LotteryWrapper.testFulfillRandomnessZeroPlayers(
+                    "0x3c79835819c98ec534a806af3c653103cda379b6ebdaa07632da2b195a327abe",
+                    777
+                ),
+                "No players in the Lottery");
+        });
+
+        it('fullfuillRandomness callback succeeds', async () => {
+                          
+            await LotteryWrapper.testFulfillRandomnessSuccess(
+                "0x3c79835819c98ec534a806af3c653103cda379b6ebdaa07632da2b195a327abe",
+                777,
+                {value: await LotteryWrapper.getEntranceFee()}
+            )
+                
+        });
+        });
     });
 });
