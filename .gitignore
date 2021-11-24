@@ -6,9 +6,6 @@ typechain
 
 .DS_Store
 
-#Shadow CLJS
-.shadow-cljs
-out
 
 #Hardhat files
 cache
