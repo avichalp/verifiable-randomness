@@ -5,8 +5,6 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "hardhat/console.sol";
-
 contract Lottery is VRFConsumerBase, Ownable {
     enum LOTTERY_STATE {
         OPEN,
