@@ -1,17 +1,20 @@
-# verifiable-random-lottery
+# Verifiable Random Lottery
 
-Uses Chainlink's Verifiable Random Function to implement a lottery on Ethereum
+__Note: This project is a learning exercise should not be used in production__
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+Chainlink provides a source of [verifiable randomess](https://docs.chain.link/docs/chainlink-vrf/) on the blockchain. 
 
-Try running some of the following tasks:
+> Chainlink VRF (Verifiable Random Function) is a provably-fair and verifiable source of randomness designed for smart contracts. Smart contract developers can use Chainlink VRF as a tamper-proof random number generator (RNG) to build reliable smart contracts for any applications which rely on unpredictable outcomes:
+
+
+This project uses this Chainlink to get a random number. A user can participate in the lottery by sending a transaction to this contract with a value greater than a minimum required fee. 
+
+All the entrants are added to an array. Based on the random number provided by Chainlink, an index of the array is chosen as the winner. When the lottery ends, the winner will be transferred all the funds collected in the contract.
+
+The Owner is a privileged user. They can start and end the lottery. 
+
+Use hardhat to run tests:
 
 ```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
 npx hardhat test
-npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
 ```
