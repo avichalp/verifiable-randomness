@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "../Lottrey.sol";
 
-
 contract LotteryTest is Lottery {
     // todo using SafeMath ??
 

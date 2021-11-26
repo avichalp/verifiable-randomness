@@ -1,8 +1,8 @@
-# Verifiable Random Lottery
+# Verifiable Randomness
 
 **Note: This project is a learning exercise should not be used in production**
 
-Chainlink provides a source of [verifiable randomess](https://docs.chain.link/docs/chainlink-vrf/) on the blockchain.
+Blockchains are notoriously deterministic. Chainlink provides a source of [verifiable randomess](https://docs.chain.link/docs/chainlink-vrf/) on the blockchain.
 
 > Chainlink VRF (Verifiable Random Function) is a provably-fair and verifiable source of randomness designed for smart contracts. Smart contract developers can use Chainlink VRF as a tamper-proof random number generator (RNG) to build reliable smart contracts for any applications which rely on unpredictable outcomes:
 
