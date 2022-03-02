@@ -34,7 +34,7 @@ contract Lottery is VRFConsumerBase, Ownable {
         uint256 _fee,
         bytes32 _keyHash
     ) VRFConsumerBase(_vrfCoordinator, _link) {
-        usdEntryFee = 50 * 10 * (10**18);
+        usdEntryFee = 50 * (10**18);
         _ethUsdPriceFeed = AggregatorV3Interface(_priceFeedAddress);
         lottery_state = LOTTERY_STATE.CLOSED;
         vrfCoordinator = _vrfCoordinator;
@@ -65,8 +65,21 @@ contract Lottery is VRFConsumerBase, Ownable {
 
     function getEntranceFee() public view returns (uint256) {
         (, int price, , , ) = _ethUsdPriceFeed.latestRoundData();
+
+        // price of 1 ETH in USD represented as 18 decimal places
         uint256 adjustedPrice = uint256(price) * 10**10; // 18 decimals
+        
+        // EVM doesn't have floats, which means the result will be truncated to 0
+        //
+        // (50 * (10 ** 18)) / 2000 * (10**8) * (10**10) -> 0.025
+        //
+        // make sure `uint` division doesn't return 0 
+        // by multiplying the numerator by 10**18
+        //
+        // This will be entry fee in ETH represented as 18 decimal places
+        // or entry fee in wei
         uint256 costToEnter = (usdEntryFee * 10**18) / adjustedPrice;
+        
         return costToEnter;
     }
 
