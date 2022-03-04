@@ -8,7 +8,7 @@ const hre = require('hardhat');
 async function deployLottery() {  
   const rinkebyURL = hre.config.networks.rinkeby.url;
   const rinkebyProvider = new hre.ethers.providers.JsonRpcProvider(rinkebyURL);
-  // (def rinkeby-provider (new (.-JsonRpcProvider providers) rinkeby-url))
+  
   const wallet = new hre.ethers.Wallet(
     hre.config.networks.rinkeby.accounts[0],
     rinkebyProvider
@@ -16,8 +16,7 @@ async function deployLottery() {
 
   const Lottery = await hre.ethers.getContractFactory('Lottery', wallet);
 
-  // LINK fee for randomness and price feeds
-  // "250000000000000000"
+  // 0.25 LINK = "250000000000000000"
   const fee = "250000000000000000"
 
   const keyHash = "0xd89b2bf150e3b9e13446986e571fb9cab24b13cea0a43ea20a6049a85cc807cc"
