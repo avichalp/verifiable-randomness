@@ -68,18 +68,18 @@ contract Lottery is VRFConsumerBase, Ownable {
 
         // price of 1 ETH in USD represented as 18 decimal places
         uint256 adjustedPrice = uint256(price) * 10**10; // 18 decimals
-        
+
         // EVM doesn't have floats, which means the result will be truncated to 0
         //
         // (50 * (10 ** 18)) / 2000 * (10**8) * (10**10) -> 0.025
         //
-        // make sure `uint` division doesn't return 0 
+        // make sure `uint` division doesn't return 0
         // by multiplying the numerator by 10**18
         //
         // This will be entry fee in ETH represented as 18 decimal places
         // or entry fee in wei
         uint256 costToEnter = (usdEntryFee * 10**18) / adjustedPrice;
-        
+
         return costToEnter;
     }
 
